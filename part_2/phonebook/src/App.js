@@ -36,11 +36,26 @@ const Persons = ({persons, filter, handleDelete}) => {
 }
 
 
+const Notification = ({message}) => {
+    if (message === null) {
+      return null
+    }
+
+    const myColor = message.type === 'success' ? 'green' : 'red';
+  
+    return (
+      <div className="error" style={{color: `${myColor}`}} >
+        {message.msg}
+      </div>
+    )
+  }
+
 const App = () => {
   const [ persons, setPersons] = useState([]); 
   const [ newName, setNewName ] = useState('');
   const [ newNumber, setNewNumber ] = useState('');
   const [ filter, setFilter ] = useState('');
+  const [ message, setMessage ] = useState(null);
 
   useEffect(() => {
       getAll().then(response => {
@@ -72,6 +87,12 @@ const App = () => {
             .then(response => {
                 const temp = persons.filter(person => person.id !== response.data.id);
                 setPersons([...temp, response.data]);
+            })
+            .catch(error => {
+              setMessage({msg:`${data.name} has already been removed from the database`, type: 'error'});
+              setTimeout(() => {
+                  setMessage(null);
+              }, 5000);
             });
         }
       } else {
@@ -82,6 +103,10 @@ const App = () => {
   
         addOne(person).then(response => {
               setPersons([...persons, response.data]);
+              setMessage({msg:`Added ${person.name}`, type: 'success'});
+              setTimeout(() => {
+                  setMessage(null);
+              }, 5000);
           });
       }      
   }
@@ -91,13 +116,19 @@ const App = () => {
         removeOne(id).then(response => {
             const newPersons = persons.filter(person => person.id !== id);
             setPersons([...newPersons]);
-        }).catch(error => console.log(error));
+        }).catch(error => {
+            setMessage({msg:'error occured during deletion', type: 'error'});
+              setTimeout(() => {
+                  setMessage(null);
+              }, 5000);
+        });
       }
   }
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} />
       <Filter name={filter} value={filter} handleChange={handleChange} />
       <h2>Add a new</h2>
       <PersonForm newName={newName} newNumber={newNumber} handleNameChange={handleNameChange} handleNumberChange={handleNumberChange} addPerson={addPerson} />
