@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+
+import { getAll, addOne, removeOne, updateOne } from './services/persons';
 
 
 const Filter = ({name, value, handleChange}) => (
@@ -20,15 +21,15 @@ const PersonForm = ({ newName, newNumber, handleNameChange, handleNumberChange, 
       </form>
 );
 
-const Person = ({person: {name, number}}) => (
-    <p key={name}>{name}{" "}{number}</p>
+const Person = ({person: {id, name, number}, handleDelete}) => (
+    <p>{name}{" "}{number}<button onClick={() => handleDelete(id)}>Delete</button></p>
 );
 
 
-const Persons = ({persons, filter}) => {
+const Persons = ({persons, filter, handleDelete}) => {
     if(persons.length > 0) {
         return persons.filter(person => person.name.toLowerCase().includes(filter))
-        .map(person => <Person key={person.id} person={person} />)
+        .map(person => <Person key={person.id} person={person} handleDelete={handleDelete} />)
     } else {
         return <p>Loading...</p>;
     }
@@ -42,9 +43,7 @@ const App = () => {
   const [ filter, setFilter ] = useState('');
 
   useEffect(() => {
-      axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
+      getAll().then(response => {
           setPersons(response.data);
       });
   }, []);
@@ -64,19 +63,36 @@ const App = () => {
   const addPerson = (event) => {
       event.preventDefault();
 
-      const isExists = persons.filter(person => person.name.toLowerCase().includes(newName));
+      const isExists = persons.filter(person => person.name.toLowerCase() === newName.toLowerCase());       
         
       if(isExists.length > 0) {
-          alert(`${newName} already exists in the phonebook`);
-          return;
-      }
-      
-      const person = {
-          name: newName,
-          number: newNumber
-      };
+        if(window.confirm(`${newName} already exists in the phonebook, replace the old number with a new one?`)){
+            const data = {name: newName, number: newNumber};
+            updateOne(isExists[0].id, data)
+            .then(response => {
+                const temp = persons.filter(person => person.id !== response.data.id);
+                setPersons([...temp, response.data]);
+            });
+        }
+      } else {
+        const person = {
+            name: newName,
+            number: newNumber
+        };
+  
+        addOne(person).then(response => {
+              setPersons([...persons, response.data]);
+          });
+      }      
+  }
 
-      setPersons([...persons, person]);
+  const handleDelete = (id) => {
+    if (window.confirm("are you sure?")) { 
+        removeOne(id).then(response => {
+            const newPersons = persons.filter(person => person.id !== id);
+            setPersons([...newPersons]);
+        }).catch(error => console.log(error));
+      }
   }
 
   return (
@@ -86,7 +102,7 @@ const App = () => {
       <h2>Add a new</h2>
       <PersonForm newName={newName} newNumber={newNumber} handleNameChange={handleNameChange} handleNumberChange={handleNumberChange} addPerson={addPerson} />
       <h2>Numbers</h2>
-      <Persons persons={persons} filter={filter} />
+      <Persons persons={persons} filter={filter} handleDelete={handleDelete} />
     </div>
   )
 }
