@@ -1,0 +1,28 @@
+{
+  "name": "phonebook_api",
+  "version": "1.0.0",
+  "description": "api for phonebook",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui": "rm -rf build && cd ../full_stack_mooc/part_2/phonebook && npm run build --prod && cp -r build ../../../part_3",
+    "deploy": "git push heroku master",
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && npm run deploy",
+    "logs:prod": "heroku logs --tail"
+  },
+  "author": "Sunil",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.9.7",
+    "mongoose-unique-validator": "^2.0.3",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}
